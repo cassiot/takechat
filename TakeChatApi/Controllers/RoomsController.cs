@@ -18,7 +18,7 @@ namespace Take.TakeChat.Api.Controllers
             this.roomRepository = roomRepository;
         }
 
-        [HttpGet("{id}")]
+        [HttpGet]
         public IEnumerable<RoomModel> Get()
         {
             var rooms = roomRepository.GetRooms();
