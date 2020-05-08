@@ -46,10 +46,12 @@ namespace Take.TakeChat.Repository
 
             var room = GetRoom(message.RoomId);
             
+            //If the message is not private, copy it to all users in the room
             if (message.IsPrivate == false)
             {
                 foreach (var user in room.Users)
                 {
+                    //Don't copy to who sent it
                     if (user.Id == message.FromUserId)
                         continue;
 

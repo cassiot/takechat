@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "TakeChatClient": {
+      "commandName": "Project",
+      "commandLineArgs": "http://localhost:52199"
+    }
+  }
+}

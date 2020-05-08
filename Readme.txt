@@ -16,6 +16,8 @@ Por causa do motivo acima, gostaria de esclarecer que:
 
 -Implementei todas operações num único controller já que não são muitas. Talvez num projeto real tivesse que refatorar para 3 controllers. Rooms, Messages, Users
 
+-Coloquei poucos comentário porque acho que o código é auto explicativo em sua maior parte. Não sei se esse é um conceito que a Take usa mas pelas considerações acima, considero suficiente.
+
 Outras considerações:
 
 -Mesmo com essa restrição, acredito que fiz quase tudo que deveria no projeto. Não é o que eu entregaria como um trabalho de médio a longo prazo mas para 7 horas de trabalho acho que está muito bom.

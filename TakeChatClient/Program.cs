@@ -13,7 +13,7 @@ namespace TakeChatClient
     class Program
     {
         static HttpClientHandler handler = new HttpClientHandler();
-        static HttpClient http;// = new HttpClient(handler);
+        static HttpClient http;
 
         const string PROMPT = ":> ";
 
@@ -28,9 +28,19 @@ namespace TakeChatClient
 
         static void Main(string[] args)
         {
+            if (args.Length < 1)
+            {
+                Console.WriteLine("You must inform the host address");
+                Console.WriteLine("Usege: takechatclient.exe http://yourhostaddress");
+                Environment.Exit(1);
+            }
+
             http = new HttpClient(handler);
             //http.BaseAddress = new Uri("http://localhost:5000/api/");
-            http.BaseAddress = new Uri("http://localhost:52199/api/");
+            //http.BaseAddress = new Uri("http://localhost:52199/api/");
+            
+            
+            http.BaseAddress = new Uri(args[0] + "/api/");
 
             Console.WriteLine("Welcome to Take Chat!");
 
@@ -141,7 +151,7 @@ namespace TakeChatClient
 
             currentRoom = room;
 
-            http.PostAsync($"rooms/{room.Id}/users", new StringContent(JsonSerializer.Serialize(user), Encoding.UTF8, "application/json"));
+            var postReques = http.PostAsync($"rooms/{room.Id}/users", new StringContent(JsonSerializer.Serialize(user), Encoding.UTF8, "application/json")).Result;
 
             Console.WriteLine();
             Console.WriteLine($"Welcome to chat room {room.Name}");
@@ -157,6 +167,7 @@ namespace TakeChatClient
 
             var updateTaskCancellation = new CancellationTokenSource();
 
+            ///This task runs in background and update rooms, users and messages periodically
             var updateTask = Task.Factory.StartNew(async () => 
             {
                 while (true)
@@ -195,6 +206,13 @@ namespace TakeChatClient
                     sb.Append(input.KeyChar);
             }
         }
+        static IEnumerable<MessageReturnModel> GetMessages()
+        {
+            var messagesRequest = http.GetAsync($"rooms/{currentRoom.Id}/messages?userId={user.Id}").Result;
+            var messages = JsonSerializer.Deserialize<IEnumerable<MessageReturnModel>>(messagesRequest.Content.ReadAsStringAsync().Result, option);
+
+            return messages;
+        }
 
         static void PrintNewMessages()
         {
@@ -210,14 +228,6 @@ namespace TakeChatClient
             }
         }
 
-        static IEnumerable<MessageReturnModel> GetMessages()
-        {
-            var messagesRequest = http.GetAsync($"rooms/{currentRoom.Id}/messages?userId={user.Id}").Result;
-            var messages = JsonSerializer.Deserialize<IEnumerable<MessageReturnModel>>(messagesRequest.Content.ReadAsStringAsync().Result, option);
-
-            return messages;
-        }
-
         static string SendMessage(string text)
         {
             string msgText = "";
@@ -226,6 +236,7 @@ namespace TakeChatClient
 
             if (split.Length > 1)
             {
+                //Private messages start with p.
                 var userToName = split[0].Replace("p.", "");
                 userTo = users.Where(u => u.Name == userToName).SingleOrDefault();
                 msgText = split[1];
