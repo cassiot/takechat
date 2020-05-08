@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Take.TakeChat.Api.Models;
 using Take.TakeChat.Domain;
+using Take.TakeChat.Models;
 using Take.TakeChat.Repository;
 
 namespace Take.TakeChat.Api.Controllers

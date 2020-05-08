@@ -16,6 +16,8 @@ namespace TakeChatClient
 
         static void Main(string[] args)
         {
+            http.BaseAddress = new Uri("http://localhost");
+
             Console.WriteLine("Welcome to Take Chat!");
 
             Console.WriteLine();
@@ -59,7 +61,7 @@ namespace TakeChatClient
         }
         static void ListRooms()
         {
-            var roomsRequest = http.GetAsync("").Result;
+            var roomsRequest = http.GetAsync("rooms").Result;
             var rooms = JsonSerializer.Deserialize<IEnumerable<RoomModel>>(roomsRequest.Content.ReadAsStringAsync().Result);
 
             Console.WriteLine("Rooms");
@@ -91,7 +93,7 @@ namespace TakeChatClient
 
         static void EnterChatRoom(RoomModel room)
         {
-            http.PostAsync($"{room.Id}/users", new StringContent(JsonSerializer.Serialize(user)));
+            http.PostAsync($"rooms/{room.Id}/users", new StringContent(JsonSerializer.Serialize(user)));
 
             Console.WriteLine($"Welcome to chat room {room.Name}");
             Console.WriteLine();
@@ -144,14 +146,14 @@ namespace TakeChatClient
                 ToUserId = userTo
             };
 
-            http.PostAsync($"{room.Id}/messages", new StringContent(JsonSerializer.Serialize(message)));
+            http.PostAsync($"rooms/{room.Id}/messages", new StringContent(JsonSerializer.Serialize(message)));
 
             Console.WriteLine();
         }
 
         static void ExitChatRoom(RoomModel room)
         {
-            http.DeleteAsync($"{room.Id}/users/{new StringContent(user.Id)}");
+            http.DeleteAsync($"rooms/{room.Id}/users/{new StringContent(user.Id)}");
         }
 
         static string CreateRoom(string roomName)
