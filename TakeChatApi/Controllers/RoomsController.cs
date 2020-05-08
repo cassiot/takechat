@@ -70,13 +70,13 @@ namespace Take.TakeChat.Api.Controllers
         }
 
         [HttpDelete("{id}/users/{userId}")]
-        public void DeleteUser(string id, [FromBody] string userId)
+        public void DeleteUser(string id, string userId)
         {
             roomRepository.RemoveUserFromRoom(id, userId);
         }
 
         [HttpGet("{id}/messages")]
-        public IEnumerable<MessageReturnModel> GetMessages(string id, string userId)
+        public IEnumerable<MessageReturnModel> GetMessages(string id, [FromQuery] string userId)
         {
             var messages = roomRepository.GetMessagesForUser(id, userId);
 
@@ -84,7 +84,8 @@ namespace Take.TakeChat.Api.Controllers
             {
                 FromUserId = m.FromUserId,
                 IsPrivate = m.IsPrivate,
-                Text = m.Text
+                Text = m.Text,
+                ToUserId = m.ToUserId
             });
 
             return ret;

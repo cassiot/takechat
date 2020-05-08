@@ -28,9 +28,13 @@ namespace Take.TakeChat.Repository
         public IEnumerable<Message> GetMessagesForUser(string roomId, string userId)
         {
             var room = GetRoom(roomId);
+            var user = room.Users.Where(u => u.Id == userId).SingleOrDefault();
+            
+            if (user == null)
+                return new List<Message>();
 
-            var messages = room.Messages.Where(m => m.ToUserId == userId);
-            room.Messages = room.Messages.Where(m => m.ToUserId != userId).ToList();
+            var messages = user.Messages;
+            user.Messages = new List<Message>();
 
             return messages;
         }
@@ -41,8 +45,26 @@ namespace Take.TakeChat.Repository
                 return;
 
             var room = GetRoom(message.RoomId);
+            
+            if (message.IsPrivate == false)
+            {
+                foreach (var user in room.Users)
+                {
+                    if (user.Id == message.FromUserId)
+                        continue;
 
-            room.Messages.Add(message);
+                    user.Messages.Add(message);
+                }
+            }
+            else
+            {
+                var user = room.Users.Where(u => u.Id == message.ToUserId).SingleOrDefault();
+
+                if (user == null || user.Id == message.FromUserId)
+                    return;
+
+                user.Messages.Add(message);
+            }
         }
 
         private Room GetRoom(string roomId)

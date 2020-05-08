@@ -4,6 +4,8 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 using Take.TakeChat.Models;
 
 namespace TakeChatClient
@@ -18,8 +20,10 @@ namespace TakeChatClient
         static string mainMenuInput;
         static UserModel user;
 
-        static IList<RoomModel> rooms;
+        static IList<RoomModel> rooms = new List<RoomModel>();
         static RoomModel currentRoom;
+        static IEnumerable<UserModel> users;
+
         static JsonSerializerOptions option = new JsonSerializerOptions() { PropertyNameCaseInsensitive = true };
 
         static void Main(string[] args)
@@ -58,6 +62,8 @@ namespace TakeChatClient
             Console.WriteLine();
             Console.Write(PROMPT);
 
+            GetRooms();
+
             mainMenuInput = Console.ReadLine();
 
             switch (mainMenuInput)
@@ -65,7 +71,7 @@ namespace TakeChatClient
                 case "1": ListRooms(); break;
                 case "2": SelectChatRoom(); break;
                 case "3": CreateChatRoom(); break;
-                case "4": break;
+                case "4": Environment.Exit(0); break;
                 default:
                     PrintWrongOption();
                     PrintMainMenu();
@@ -73,11 +79,17 @@ namespace TakeChatClient
                     break;
             }
         }
-        static void ListRooms()
+
+        static void GetRooms()
         {
             var roomsRequest = http.GetAsync("rooms").Result;
 
             rooms = JsonSerializer.Deserialize<IList<RoomModel>>(roomsRequest.Content.ReadAsStringAsync().Result, option);
+        }
+
+        static void ListRooms()
+        {
+            GetRooms();
 
             Console.WriteLine();
             Console.Write("Rooms:");
@@ -93,12 +105,17 @@ namespace TakeChatClient
             PrintMainMenu();
         }
 
-        static void ListUsers(string roomId)
+        static void GetUsers()
         {
-            var usersRequest = http.GetAsync($"rooms/{roomId}/users").Result;
-            var users = JsonSerializer.Deserialize<IEnumerable<UserModel>>(usersRequest.Content.ReadAsStringAsync().Result);
+            var usersRequest = http.GetAsync($"rooms/{currentRoom.Id}/users").Result;
+            users = JsonSerializer.Deserialize<IEnumerable<UserModel>>(usersRequest.Content.ReadAsStringAsync().Result, option);
+        }
 
-            Console.WriteLine("Users in this room");
+        static void ListUsers()
+        {
+            GetUsers();
+
+            Console.WriteLine("Users in this room:");
             Console.WriteLine();
 
             foreach (var u in users)
@@ -117,48 +134,100 @@ namespace TakeChatClient
             var room = rooms.SingleOrDefault(r => r.Name == roomName);
 
             if (room == null)
+            {
+                Console.WriteLine("Room not found");
                 PrintMainMenu();
+            }
 
             currentRoom = room;
 
-            http.PostAsync($"rooms/{room.Id}/users", new StringContent(JsonSerializer.Serialize(user)));
+            http.PostAsync($"rooms/{room.Id}/users", new StringContent(JsonSerializer.Serialize(user), Encoding.UTF8, "application/json"));
 
+            Console.WriteLine();
             Console.WriteLine($"Welcome to chat room {room.Name}");
             Console.WriteLine();
             Console.WriteLine($"Type your message and hit <Enter> to send. Type <Esc> to return to main menu");
-            Console.WriteLine($"[userName]:: to send message to specific user");
+            Console.WriteLine($"Use [userName]:: to send message to specific user");
             Console.WriteLine($"Use p.[userName]:: to send private message to specific user");
 
-            ListUsers(room.Id);
+            ListUsers();
 
             ConsoleKeyInfo input;
             var sb = new StringBuilder();
+
+            var updateTaskCancellation = new CancellationTokenSource();
+
+            var updateTask = Task.Factory.StartNew(async () => 
+            {
+                while (true)
+                {
+                    GetRooms();
+                    GetUsers();
+                    PrintNewMessages();
+
+                    await Task.Delay(3000);
+                }
+            }, updateTaskCancellation.Token);
 
             while (true)
             {
                 input = Console.ReadKey();
 
-                if (input.Key != ConsoleKey.Enter)
+                if (input.Key == ConsoleKey.Enter)
                 {
-                    sb.Append(input.KeyChar);
-                    break;
+                    var text = sb.ToString().Trim();
+                    sb.Clear();
+
+                    var msgText = SendMessage(text);
+
+                    Console.WriteLine();
+                    Console.WriteLine($"{user.Name}: {msgText}");
                 }
-                else if (input.Key != ConsoleKey.Escape)
+                else if (input.Key == ConsoleKey.Escape)
                 {
+                    updateTaskCancellation.Cancel();
                     ExitChatRoom();
                     PrintMainMenu();
+
                     return;
                 }
+                else
+                    sb.Append(input.KeyChar);
             }
+        }
 
-            var text = sb.ToString().Trim();
+        static void PrintNewMessages()
+        {
+            var messages = GetMessages();
+
+            foreach (var m in messages)
+            {
+                var fromUser = users.Where(u => u.Id == m.FromUserId).SingleOrDefault();
+                var toUser = users.Where(u => u.Id == m.ToUserId).SingleOrDefault(); 
+                
+                var toOne = toUser  == null ? "" : "@" + toUser.Name;
+                Console.WriteLine($"{fromUser.Name}: {toOne} {m.Text}");
+            }
+        }
+
+        static IEnumerable<MessageReturnModel> GetMessages()
+        {
+            var messagesRequest = http.GetAsync($"rooms/{currentRoom.Id}/messages?userId={user.Id}").Result;
+            var messages = JsonSerializer.Deserialize<IEnumerable<MessageReturnModel>>(messagesRequest.Content.ReadAsStringAsync().Result, option);
+
+            return messages;
+        }
+
+        static string SendMessage(string text)
+        {
             string msgText = "";
-            string userTo = "";
+            UserModel userTo = null;
             var split = text.Split("::");
 
-            if (split.Length > 0)
+            if (split.Length > 1)
             {
-                userTo = split[0].Replace("p.", "");
+                var userToName = split[0].Replace("p.", "");
+                userTo = users.Where(u => u.Name == userToName).SingleOrDefault();
                 msgText = split[1];
             }
             else
@@ -170,20 +239,19 @@ namespace TakeChatClient
             {
                 FromUserId = user.Id,
                 IsPrivate = text.StartsWith("p"),
-                Text = msgText,
-                ToUserId = userTo
+                Text = msgText.Trim(),
+                ToUserId = userTo == null ? null : userTo.Id
             };
 
-            http.PostAsync($"rooms/{room.Id}/messages", new StringContent(JsonSerializer.Serialize(message)));
+            var r = http.PostAsync($"rooms/{currentRoom.Id}/messages", new StringContent(JsonSerializer.Serialize(message), Encoding.UTF8, "application/json")).Result;
 
-            Console.WriteLine();
+            return msgText;
         }
 
         static void ExitChatRoom()
         {
-            http.DeleteAsync($"rooms/{currentRoom.Id}/users/{new StringContent(user.Id)}");
-
-            PrintMainMenu();
+            var deleteRequest = http.DeleteAsync($"rooms/{currentRoom.Id}/users/{user.Id}").Result;
+            users = null;
         }
 
         static void CreateChatRoom()

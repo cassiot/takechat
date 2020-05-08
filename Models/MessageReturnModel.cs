@@ -13,5 +13,6 @@ namespace Take.TakeChat.Models
         public bool IsPrivate { get; set; }
 
         public string Text { get; set; }
+        public string ToUserId { get; set; }
     }
 }
