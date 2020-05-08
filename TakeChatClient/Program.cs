@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -9,20 +10,29 @@ namespace TakeChatClient
 {
     class Program
     {
-        static HttpClient http = new HttpClient();
+        static HttpClientHandler handler = new HttpClientHandler();
+        static HttpClient http;// = new HttpClient(handler);
+
+        const string PROMPT = ":> ";
 
         static string mainMenuInput;
         static UserModel user;
 
+        static IList<RoomModel> rooms;
+        static RoomModel currentRoom;
+        static JsonSerializerOptions option = new JsonSerializerOptions() { PropertyNameCaseInsensitive = true };
+
         static void Main(string[] args)
         {
-            http.BaseAddress = new Uri("http://localhost");
+            http = new HttpClient(handler);
+            //http.BaseAddress = new Uri("http://localhost:5000/api/");
+            http.BaseAddress = new Uri("http://localhost:52199/api/");
 
             Console.WriteLine("Welcome to Take Chat!");
 
             Console.WriteLine();
 
-            Console.WriteLine("Type your name: ");
+            Console.Write($"Type your name {PROMPT}");
             var userName = Console.ReadLine().Trim();
 
             user = new UserModel()
@@ -39,18 +49,22 @@ namespace TakeChatClient
 
         static void PrintMainMenu()
         {
+            Console.WriteLine("*** MAIN MENU ***");
+            Console.WriteLine();
             Console.WriteLine("1: List rooms");
             Console.WriteLine("2: Select room");
             Console.WriteLine("3: Create room");
             Console.WriteLine("4: Exit");
+            Console.WriteLine();
+            Console.Write(PROMPT);
 
             mainMenuInput = Console.ReadLine();
 
             switch (mainMenuInput)
             {
-                case "1": break;
-                case "2": break;
-                case "3": break;
+                case "1": ListRooms(); break;
+                case "2": SelectChatRoom(); break;
+                case "3": CreateChatRoom(); break;
                 case "4": break;
                 default:
                     PrintWrongOption();
@@ -62,9 +76,11 @@ namespace TakeChatClient
         static void ListRooms()
         {
             var roomsRequest = http.GetAsync("rooms").Result;
-            var rooms = JsonSerializer.Deserialize<IEnumerable<RoomModel>>(roomsRequest.Content.ReadAsStringAsync().Result);
 
-            Console.WriteLine("Rooms");
+            rooms = JsonSerializer.Deserialize<IList<RoomModel>>(roomsRequest.Content.ReadAsStringAsync().Result, option);
+
+            Console.WriteLine();
+            Console.Write("Rooms:");
             Console.WriteLine();
 
             foreach (var r in rooms)
@@ -73,6 +89,8 @@ namespace TakeChatClient
             }
 
             Console.WriteLine();
+
+            PrintMainMenu();
         }
 
         static void ListUsers(string roomId)
@@ -91,8 +109,18 @@ namespace TakeChatClient
             Console.WriteLine();
         }
 
-        static void EnterChatRoom(RoomModel room)
+        static void SelectChatRoom()
         {
+            Console.WriteLine();
+            Console.Write($"Room name {PROMPT}");
+            var roomName = Console.ReadLine();
+            var room = rooms.SingleOrDefault(r => r.Name == roomName);
+
+            if (room == null)
+                PrintMainMenu();
+
+            currentRoom = room;
+
             http.PostAsync($"rooms/{room.Id}/users", new StringContent(JsonSerializer.Serialize(user)));
 
             Console.WriteLine($"Welcome to chat room {room.Name}");
@@ -117,7 +145,7 @@ namespace TakeChatClient
                 }
                 else if (input.Key != ConsoleKey.Escape)
                 {
-                    ExitChatRoom(room);
+                    ExitChatRoom();
                     PrintMainMenu();
                     return;
                 }
@@ -151,21 +179,27 @@ namespace TakeChatClient
             Console.WriteLine();
         }
 
-        static void ExitChatRoom(RoomModel room)
+        static void ExitChatRoom()
         {
-            http.DeleteAsync($"rooms/{room.Id}/users/{new StringContent(user.Id)}");
+            http.DeleteAsync($"rooms/{currentRoom.Id}/users/{new StringContent(user.Id)}");
+
+            PrintMainMenu();
         }
 
-        static string CreateRoom(string roomName)
+        static void CreateChatRoom()
         {
-            var room = new RoomModel() 
-            {
-                Name = roomName
-            };
+            Console.WriteLine();
+            Console.Write($"Room name {PROMPT}");
+            
+            var roomName = Console.ReadLine();
 
-            var id = http.PostAsync($"rooms", new StringContent(JsonSerializer.Serialize(room))).Result.Content.ReadAsStringAsync().Result;
+            var request = http.PostAsync($"rooms?roomName={roomName}", null).Result;
+            var id = request.Content.ReadAsStringAsync().Result;
 
-            return id;
+            rooms.Add(new RoomModel() { Id = id, Name = roomName });
+
+            Console.WriteLine();
+            PrintMainMenu();
         }
 
         static void PrintWrongOption()

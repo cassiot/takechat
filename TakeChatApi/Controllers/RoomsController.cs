@@ -27,18 +27,20 @@ namespace Take.TakeChat.Api.Controllers
             {
                 Id = r.Id,
                 Name = r.Name
-            });
+            });            
         }
 
         [HttpPost]
-        public void Post([FromBody] RoomModel roomModel)
+        public string Post([FromQuery] string roomName)
         {
             var room = new Room()
             {
-                Name = roomModel.Name
+                Name = roomName
             };
 
             roomRepository.CreateRoom(room);
+
+            return room.Id;
         }
 
         [HttpGet("{id}/users")]
