@@ -1,4 +1,4 @@
-﻿namespace Take.TakeChat.Api.Models
+﻿namespace Take.TakeChat.Models
 {
     public class MessageReceivedModel
     {
