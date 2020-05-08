@@ -15,6 +15,16 @@ namespace Take.TakeChat.Repository
                 rooms = new Dictionary<string, Room>();
         }
 
+        public IEnumerable<Room> GetRooms()
+        {
+            return rooms.Values;
+        }
+
+        public void CreateRoom(Room room)
+        {
+            rooms.Add(room.Id, room);
+        }
+
         public IEnumerable<Message> GetMessagesForUser(string roomId, string userId)
         {
             var room = GetRoom(roomId);

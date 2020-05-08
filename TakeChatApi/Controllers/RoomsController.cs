@@ -21,12 +21,35 @@ namespace Take.TakeChat.Api.Controllers
             this.roomRepository = roomRepository;
         }
 
+        [HttpGet("{id}")]
+        public IEnumerable<RoomModel> Get()
+        {
+            var rooms = roomRepository.GetRooms();
+
+            return rooms.Select(r => new RoomModel()
+            {
+                Id = r.Id,
+                Name = r.Name
+            });
+        }
+
+        [HttpPost]
+        public void Post([FromBody] RoomModel roomModel)
+        {
+            var room = new Room()
+            {
+                Name = roomModel.Name
+            };
+
+            roomRepository.CreateRoom(room);
+        }
+
         [HttpGet("{id}/messages")]
-        public IEnumerable<MessageReturn> Get(string id, string userId)
+        public IEnumerable<MessageReturnModel> GetMessages(string id, string userId)
         {
             var messages = roomRepository.GetMessagesForUser(id, userId);
 
-            var ret = messages.Select(m => new MessageReturn()
+            var ret = messages.Select(m => new MessageReturnModel()
             {
                 FromUserId = m.FromUserId,
                 IsPrivate = m.IsPrivate,
@@ -37,15 +60,15 @@ namespace Take.TakeChat.Api.Controllers
         }
 
         [HttpPost("{id}/messages")]
-        public void Post(string id, [FromBody] MessageReceived messageReceived)
+        public void PostMessage(string id, [FromBody] MessageReceivedModel messageReceivedModel)
         {
             var message = new Message()
             {
-                FromUserId = messageReceived.FromUserId,
-                IsPrivate = messageReceived.IsPrivate,
+                FromUserId = messageReceivedModel.FromUserId,
+                IsPrivate = messageReceivedModel.IsPrivate,
                 RoomId = id,
-                Text = messageReceived.Text,
-                ToUserId = messageReceived.ToUserId
+                Text = messageReceivedModel.Text,
+                ToUserId = messageReceivedModel.ToUserId
             };
 
             roomRepository.SaveMessage(message);

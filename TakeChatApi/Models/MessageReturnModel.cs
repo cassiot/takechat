@@ -5,18 +5,8 @@ using System.Threading.Tasks;
 
 namespace Take.TakeChat.Api.Models
 {
-    public class MessageReceived
-    {
-        public string FromUserId { get; set; }
 
-        public string ToUserId { get; set; }
-
-        public bool IsPrivate { get; set; }
-
-        public string Text { get; set; }
-    }
-
-    public class MessageReturn
+    public class MessageReturnModel
     {
         public string FromUserId { get; set; }
 
