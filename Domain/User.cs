@@ -4,8 +4,8 @@ namespace Take.TakeChat.Domain
 {
     public class User
     {
-        public string Id { get; private set; } = Guid.NewGuid().ToString();
+        public string Id { get; set; }
 
-        public string NickName { get; set; }
+        public string Name { get; set; }
     }
 }

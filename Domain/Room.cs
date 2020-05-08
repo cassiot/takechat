@@ -10,5 +10,7 @@ namespace Take.TakeChat.Domain
         public string Name { get; set; }
 
         public IList<Message> Messages { get; set; } = new List<Message>();
+        
+        public IList<User> Users { get; set; } = new List<User>();
     }
 }

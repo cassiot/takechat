@@ -52,5 +52,25 @@ namespace Take.TakeChat.Repository
 
             return rooms[roomId];
         }
+
+        public IEnumerable<User> GetRoomUsers(string roomId)
+        {
+            var room = GetRoom(roomId);
+
+            return room.Users;
+        }
+
+        public void RegisterUserInRoom(string roomId, User user)
+        {
+            var room = GetRoom(roomId);
+
+            room.Users.Add(user);
+        }
+
+        public void RemoveUserFromRoom(string roomId, string userId)
+        {
+            var room = GetRoom(roomId);
+            room.Users = room.Users.Where(u=> u.Id != userId).ToList();
+        }
     }
 }

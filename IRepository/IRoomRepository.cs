@@ -12,5 +12,11 @@ namespace Take.TakeChat.Repository
         IEnumerable<Message> GetMessagesForUser(string roomId, string userId);
 
         void SaveMessage(Message message);
+        
+        IEnumerable<User> GetRoomUsers(string roomId);
+        
+        void RegisterUserInRoom(string roomId, User user);
+        
+        void RemoveUserFromRoom(string roomId, string userId);
     }
 }
