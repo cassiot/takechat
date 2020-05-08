@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IRepository", "IRepository\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain", "Domain\Domain.csproj", "{60B412AD-DFF4-4D21-BF26-4D28A1ADCE77}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TakeChatTests", "TakeChatTests\TakeChatTests.csproj", "{227433E4-6F9D-463B-96A6-53ED6FCE49F8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{60B412AD-DFF4-4D21-BF26-4D28A1ADCE77}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{60B412AD-DFF4-4D21-BF26-4D28A1ADCE77}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{60B412AD-DFF4-4D21-BF26-4D28A1ADCE77}.Release|Any CPU.Build.0 = Release|Any CPU
+		{227433E4-6F9D-463B-96A6-53ED6FCE49F8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{227433E4-6F9D-463B-96A6-53ED6FCE49F8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{227433E4-6F9D-463B-96A6-53ED6FCE49F8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{227433E4-6F9D-463B-96A6-53ED6FCE49F8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
