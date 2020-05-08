@@ -11,8 +11,12 @@ namespace Take.TakeChat.Repository
 
         public RoomRepository()
         {
-            if (rooms == null)
-                rooms = new Dictionary<string, Room>();
+            Reset();
+        }
+
+        public void Reset()
+        {
+            rooms = new Dictionary<string, Room>();
         }
 
         public IEnumerable<Room> GetRooms()
