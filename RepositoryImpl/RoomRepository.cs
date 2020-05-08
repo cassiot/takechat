@@ -25,16 +25,19 @@ namespace Take.TakeChat.Repository
             return messages;
         }
 
-        public void SaveMessage(string roomId, Message message)
+        public void SaveMessage(Message message)
         {
-            var room = GetRoom(roomId);
+            if (message == null)
+                return;
+
+            var room = GetRoom(message.RoomId);
 
             room.Messages.Add(message);
         }
 
         private Room GetRoom(string roomId)
         {
-            if (rooms.ContainsKey(roomId) == false)
+            if (string.IsNullOrWhiteSpace(roomId) || rooms.ContainsKey(roomId) == false)
                 throw new Exception("Room not found");
 
             return rooms[roomId];

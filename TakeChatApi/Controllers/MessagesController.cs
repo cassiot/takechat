@@ -4,45 +4,51 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using TakeChatApi.Models;
+using Take.TakeChat.Api.Models;
+using Take.TakeChat.Domain;
+using Take.TakeChat.Repository;
 
 namespace Take.TakeChat.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class MessagesController : ControllerBase
+    public class RoomsController : ControllerBase
     {
-        private static IEnumerable<Message> Messages
+        private IRoomRepository roomRepository;
 
-        [HttpGet]
-        public IEnumerable<MessageReturn> Get()
+        public RoomsController(IRoomRepository roomRepository)
         {
-            return new string[] { "value1", "value2" };
+            this.roomRepository = roomRepository;
         }
 
-        // GET: api/Messages/5
-        [HttpGet("{id}", Name = "Get")]
-        public string Get(int id)
+        [HttpGet("{id}/messages")]
+        public IEnumerable<MessageReturn> Get(string id, string userId)
         {
-            return "value";
+            var messages = roomRepository.GetMessagesForUser(id, userId);
+
+            var ret = messages.Select(m => new MessageReturn()
+            {
+                FromUserId = m.FromUserId,
+                IsPrivate = m.IsPrivate,
+                Text = m.Text
+            });
+
+            return ret;
         }
 
-        // POST: api/Messages
-        [HttpPost]
-        public void Post([FromBody] string value)
+        [HttpPost("{id}/messages")]
+        public void Post(string id, [FromBody] MessageReceived messageReceived)
         {
-        }
+            var message = new Message()
+            {
+                FromUserId = messageReceived.FromUserId,
+                IsPrivate = messageReceived.IsPrivate,
+                RoomId = id,
+                Text = messageReceived.Text,
+                ToUserId = messageReceived.ToUserId
+            };
 
-        // PUT: api/Messages/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-        }
-
-        // DELETE: api/ApiWithActions/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
+            roomRepository.SaveMessage(message);
         }
     }
 }

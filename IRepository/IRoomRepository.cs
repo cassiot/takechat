@@ -5,8 +5,8 @@ namespace Take.TakeChat.Repository
 {
     public interface IRoomRepository
     {
-        IEnumerable<Message> GetMessagesForUser(string userId, string roomId);
+        IEnumerable<Message> GetMessagesForUser(string roomId, string userId);
 
-        void SaveMessage(string roomId, Message message);
+        void SaveMessage(Message message);
     }
 }

@@ -5,4 +5,9 @@
     <RootNamespace>Take.TakeChat.Repository</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Domain\Domain.csproj" />
+    <ProjectReference Include="..\IRepository\IRepository.csproj" />
+  </ItemGroup>
+
 </Project>
